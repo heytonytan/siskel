@@ -20,11 +20,41 @@ var Movies = Backbone.Collection.extend({
     });
   },
 
-  comparator: 'title',
-
+  // Reverse sort order
+  // Ref: http://stackoverflow.com/questions/5013819/reverse-sort-order-with-backbone-js
+  comparator: function(model) {
+    return model.get('title');
+  },
+  
   sortByField: function(field) {
-    this.comparator = field;
+    if (this.currField === field && this.currSort === 1) {
+      this.comparator = this._reverseSortBy(this.comparator);
+      this.currSort = -1;
+    } else {
+      this.currField = field;
+      this.currSort = 1;
+      this.comparator = function(model) {
+        return model.get(field);
+      };
+    }
+
+    // this.comparator = field;
     this.sort();
+  },
+
+  currField: 'title',
+  currSort: 1,
+
+  _reverseSortBy: function(sortByFunction) {
+    return function(left, right) {
+      var l = sortByFunction(left);
+      var r = sortByFunction(right);
+
+      if (l === void 0) return -1;
+      if (r === void 0) return 1;
+
+      return l < r ? 1 : l > r ? -1 : 0;
+    };
   }
 
 });
@@ -36,6 +66,7 @@ var AppView = Backbone.View.extend({
   },
 
   handleClick: function(e) {
+    console.log('sorting');
     var field = $(e.target).val();
     this.collection.sortByField(field);
   },
